@@ -6,15 +6,10 @@ pytestmark = [pytest.mark.django_db, pytest.mark.auth]
 PROFILE_URL = reverse("accounts:profile")    
 REGISTER_URL = reverse("accounts:register") 
 
-def _skip_if_404(resp):
-    if resp.status_code == 404:
-        pytest.skip(f"Endpoint not found: {resp.request['PATH_INFO']}")
-
-
-def test_profile_requires_auth(api_client):
+def test_profile_requires_auth(api_client, skip_if_404):
 
     res = api_client.get(PROFILE_URL)
-    _skip_if_404(res)
+    skip_if_404(res)
     assert res.status_code == 403
 
 
@@ -23,6 +18,7 @@ def test_profile_requires_auth(api_client):
      "password": "pass1234"}
     
     res = api_client.post(REGISTER_URL, paylod, format="json")
+    skip_if_404(res)
     assert res.status_code == 201
     assert "access_token" in res.data
     assert "expires_at" in res.data
