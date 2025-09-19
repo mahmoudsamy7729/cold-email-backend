@@ -8,7 +8,7 @@ This backend provides secure authentication, campaign management, and background
 ## 🚀 Tech Stack
 - **Backend:** Django, Django REST Framework (DRF)
 - **Database:** PostgreSQL
-- **Authentication:** JWT (using `djangorestframework-simplejwt`)
+- **Authentication:** JWT (using `pyjwt`)
 - **Background Jobs:** Celery + Redis
 - **Environment Management:** python-decouple
 - **Testing:** pytest + pytest-django
