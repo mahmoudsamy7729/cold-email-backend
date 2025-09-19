@@ -25,10 +25,10 @@ class AudienceViewSet(viewsets.ModelViewSet):
         try:
             serializer.save()
         except IntegrityError:
-            raise ValidationError({"name": ["You already have an active audience with this name."]})
+            raise ValidationError("You already have an active audience with this name.")
         
     def perform_update(self, serializer):
         try:
             serializer.save()
         except IntegrityError:
-            raise ValidationError({"name": ["You already have an active audience with this name."]})
+            raise ValidationError("You already have an active audience with this name.")

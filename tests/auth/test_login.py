@@ -7,14 +7,12 @@ ACCESS_FIELD = "access_token"
 EXP_FIELD = "expires_at"
 REFRESH_COOKIE_NAME = "refresh_token"  
 
-def _skip_if_404(resp):
-    if resp.status_code == 404:
-        pytest.skip(f"Endpoint not found: {resp.request['PATH_INFO']}")
 
-def test_login(api_client, user):
+
+def test_login(api_client, user, skip_if_404):
     payload = {"username": user.username, "password": "pass1234"} 
     res = api_client.post(LOGIN_URL, payload, format="json")
-    _skip_if_404(res)
+    skip_if_404(res)
 
     assert res.status_code == 200
     data = res.data
@@ -24,10 +22,10 @@ def test_login(api_client, user):
     assert cookie is not None, f"{REFRESH_COOKIE_NAME} cookie not found in response cookies"
     assert cookie["httponly"] == True or str(cookie["httponly"]).lower() == "true"
 
-def test_login_fail(api_client):
+def test_login_fail(api_client, skip_if_404):
     payload = {"username": "wrong username", "password": "wrong password"}
     res = api_client.post(LOGIN_URL, payload, format="json")
-    _skip_if_404(res)
+    skip_if_404(res)
 
     assert res.status_code == 403
     assert ACCESS_FIELD not in res.data
