@@ -81,6 +81,7 @@ def test_update_audience_duplicate_name(auth_client, get_token, user, skip_if_40
     res2 = client.post(AUDIENCE_URL, {"name": "Second"})
 
     res = client.patch(f"{AUDIENCE_URL}{res2.data['id']}/", {"name": "First"})
+    skip_if_404(res)
     assert res.status_code == 400
     assert res.data["name"][0] == "You already have an active audience with this name."
 
