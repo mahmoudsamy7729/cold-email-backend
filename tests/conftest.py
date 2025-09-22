@@ -1,9 +1,11 @@
+import uuid
 import pytest
 from django.urls import reverse
 
 
 LOGIN_URL = reverse("accounts:login")
 REGISTER_URL = reverse("accounts:register")
+CONTACTS_URL = reverse("contacts:contact-list")
 ACCESS_FIELD = "access_token"
 
 
@@ -26,6 +28,16 @@ def user(django_user_model):
         email="tester@example.com",
         password="pass1234",
     )
+
+@pytest.fixture
+def other_user(django_user_model):
+    return django_user_model.objects.create_user(
+        username="other",
+        email="other@example.com",
+        password="pass1234",
+    )
+
+
 
 @pytest.fixture
 def get_token(api_client):
@@ -52,3 +64,37 @@ def auth_client(api_client):
         api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
         return api_client
     return _auth_client
+
+
+@pytest.fixture
+def audience_model():
+    from audience.models import Audience
+    return Audience
+
+@pytest.fixture
+def audience(db, audience_model, user):
+    """Default audience for the authenticated user"""
+    return audience_model.objects.create(
+        id=uuid.uuid4(),
+        user=user,
+        name="Test Audience",
+    )
+
+
+@pytest.fixture
+def other_audience(db, audience_model, other_user):
+    """Audience belonging to another user (should be excluded from queryset)"""
+    return audience_model.objects.create(
+        id=uuid.uuid4(),
+        user=other_user,
+        name="Other Audience",
+    )
+
+
+@pytest.fixture
+def create_contact():
+    """Factory to create a contact with given client, audience, and email."""
+    def _create_contact(client, audience, email="test@gmail.com"):
+        payload = {"email": email, "audience": audience.id}
+        return client.post(CONTACTS_URL, payload, format="json")
+    return _create_contact
