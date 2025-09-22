@@ -24,7 +24,7 @@ class ContactViewSet(viewsets.ModelViewSet):
     ordering = ["-created_at"]
 
     def get_queryset(self):
-        return Contact.objects.filter(audience__user=self.request.user)
+        return Contact.objects.filter(audience__user=self.request.user).select_related('audience').all()
 
     def perform_destroy(self, instance):
         instance.archive()
