@@ -1,9 +1,13 @@
 from rest_framework import serializers
 from .models import Contact
 from .services.contact_validation import ContactService, DuplicateContactEmail
+from audience.models import Audience
 
 
 class ContactSerializer(serializers.ModelSerializer):
+    audience = serializers.PrimaryKeyRelatedField(
+        queryset=Audience.objects.all()
+    )
     class Meta:
         model = Contact
         fields = [
