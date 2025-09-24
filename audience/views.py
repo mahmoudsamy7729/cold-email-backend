@@ -2,6 +2,7 @@ from django.db import IntegrityError
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
+from django.db.models import Count
 
 
 from .models import Audience
@@ -16,7 +17,7 @@ class AudienceViewSet(viewsets.ModelViewSet):
     ordering_fields = ["updated_at", "created_at", "name"]
 
     def get_queryset(self):
-        return Audience.objects.filter(user=self.request.user)
+        return Audience.objects.filter(user=self.request.user).annotate(contacts_count=Count("contacts"))
     
     def perform_destroy(self, instance):
         instance.archive()
