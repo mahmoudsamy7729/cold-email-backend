@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'accounts',
     'audience',
     'contacts',
-
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
@@ -60,10 +60,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-]
+CORS_ALLOWED_ORIGINS = [ "http://localhost:8080", "http://127.0.0.1:8080", ]
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [ "http://localhost:8080", "http://127.0.0.1:8080", ]
 
 ROOT_URLCONF = 'core.urls'
 

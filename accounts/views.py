@@ -48,7 +48,8 @@ class LoginView(APIView):
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            samesite='Lax',
+            samesite='None',
+            secure=True,
             max_age=int(settings.JWT_REFRESH_EXP_DELTA.total_seconds())
         )
         return response
