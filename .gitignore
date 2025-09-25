@@ -15,8 +15,8 @@ local_settings.py
 media/
 staticfiles/
 static/
-cert.crt
-cert.key
+*.crt
+*.key
 
 # Environment
 .env
