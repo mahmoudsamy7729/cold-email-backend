@@ -10,32 +10,63 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d test_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    env:
+      DB_NAME: test_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+      JWT_ALGORITHM: HS256
+      ALLOWED_HOSTS: "*"
+      CACHE_URL: redis://localhost:6379/1
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CELERY_RESULT_BACKEND: redis://localhost:6379/2
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create .env file
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
         run: |
-          echo "DEBUG=False" >> .env
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "DB_HOST=db" >> .env
-          echo "DB_PORT=5432" >> .env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-          echo "JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}" >> .env
-          echo "JWT_ALGORITHM=HS256" >> .env
-          echo "CACHE_URL=redis://redis:6379/1" >> .env
-          echo "CELERY_BROKER_URL=redis://redis:6379/0" >> .env
-          echo "CELERY_RESULT_BACKEND=redis://redis:6379/2" >> .env
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-
-      - name: Build and start containers
-        run: docker compose up -d --build
+      - name: Wait for Postgres to be ready
+        run: |
+          until pg_isready -h 127.0.0.1 -U postgres -d test_db; do
+            echo "Waiting for Postgres..."
+            sleep 1
+          done
 
       - name: Run migrations
-        run: docker compose exec -T web python manage.py migrate
+        run: python manage.py migrate --noinput
 
       - name: Run tests
-        run: docker compose exec -T web pytest -s -v
+        run: pytest -s -v
