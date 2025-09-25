@@ -58,7 +58,7 @@ jobs:
           done
 
       - name: Run migrations
-        run: python manage.py migrate
+        run: docker compose exec -T web python manage.py migrate
 
       - name: Run tests
-        run: pytest --disable-warnings
+        run: docker compose exec -T web pytest -s -v
