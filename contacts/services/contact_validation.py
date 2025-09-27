@@ -1,4 +1,5 @@
-from ..models import Contact, ContactStatus
+from ..models import Contact, ContactStatus, Tag
+
 
 
 
@@ -27,5 +28,26 @@ class ContactService:
             raise DuplicateContactEmail("This email already exists in this audience.")
 
         return normalized
+    
+
+    @staticmethod
+    def normalize_tags(tags: list[str]) -> list[str]:
+        if not tags:
+            return []
+        cleaned = {t.strip().lower() for t in tags if isinstance(t, str) and t.strip()}
+        return sorted(cleaned)
+    
+    @staticmethod
+    def get_or_create_tags(user, tags):
+        existing = set(
+            Tag.objects.filter(user=user, name__in=tags).values_list("name", flat=True)
+        )
+        to_create = [name for name in tags if name not in existing]
+
+        # bulk create missing tags
+        Tag.objects.bulk_create(
+            [Tag(user=user, name=name) for name in to_create],
+            ignore_conflicts=True,  # avoids race condition duplicates
+        )
     
 

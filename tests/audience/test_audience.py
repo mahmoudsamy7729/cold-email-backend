@@ -57,7 +57,7 @@ def test_list_returns_only_user_audiences(auth_client, get_token, user, skip_if_
     res = client2.get(AUDIENCE_URL)
     skip_if_404(res)
     assert res.status_code == 200 
-    names = [a["name"] for a in res.data]
+    names = [a["name"] for a in res.data['results']]
     assert "Audience for user 2" in names
     assert "Audience for user 1" not in names
 
@@ -98,7 +98,7 @@ def test_delete_archives_audience(auth_client, get_token, user, skip_if_404):
     assert del_res.status_code == 204
 
     list_res = client.get(AUDIENCE_URL)
-    names = [a["name"] for a in list_res.data]
+    names = [a["name"] for a in list_res.data['results']]
     assert "ToDelete" not in names
 
     
