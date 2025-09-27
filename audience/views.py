@@ -28,7 +28,13 @@ class AudienceViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         service = AudienceService(request.user)
         data = service.get_audiences(search=request.query_params.get("search"))
-        return Response(data)
+        page = self.paginate_queryset(self.get_queryset())
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(serializer.data)
     
     def perform_destroy(self, instance):
         instance.archive()

@@ -54,7 +54,7 @@ def test_list_contacts_related_to_user(auth_client, get_token, user, other_user,
 
     res = client.get(CONTACTS_URL)
     assert res.status_code == 200
-    emails = [c["email"] for c in res.data]
+    emails = [c["email"] for c in res.data['results']]
     assert "abc@gmail.com" in emails 
     assert "test@gmail.com" not in emails
 
@@ -117,7 +117,7 @@ def test_retrive_active_contacts(auth_client, get_token, user, audience, create_
 
     res = client.get(CONTACTS_URL)
     assert res.status_code == 200
-    emails = [c["email"] for c in res.data]
+    emails = [c["email"] for c in res.data['results']]
     assert "abc@gmail.com" in emails 
     assert "test@gmail.com" not in emails
 
@@ -134,13 +134,54 @@ def test_retrive_not_owned_contact(auth_client, get_token, user, other_user, aud
     res = client.get(f"{CONTACTS_URL}{contact_id}/")
     assert res.status_code == 404
 
+def test_create_contact_with_tags(auth_client, audience, get_token, user):
+    token1 = get_token(username=user.username, password="pass1234")
+    client = auth_client(token1)
+    payload = {
+        "audience": str(audience.id),
+        "email": "a@x.com",
+        "tags": ["Dev", "DEV", " Backend  ", "backend"]
+    }
+    resp = client.post(CONTACTS_URL, payload, format="json")
+    assert resp.status_code == 201
+    data = resp.json()
+    assert sorted(data["tags"]) == ["backend", "dev"]
 
+def test_update_contact_replaces_tags(auth_client, audience, get_token, user):
+    token1 = get_token(username=user.username, password="pass1234")
+    client = auth_client(token1)
+    payload = {
+        "audience": str(audience.id),
+        "email": "a@x.com",
+        "tags": ["dev", "backend"]
+    }
+    resp = client.post(CONTACTS_URL, payload, format="json")
+    resp = client.patch(f"{CONTACTS_URL}{resp.data['id']}/", {"tags": ["sales"]}, format="json")
+    assert resp.status_code == 200
+    assert sorted(resp.data["tags"]) == ["sales"]
 
+def test_filter_contacts_by_tags_overlap(auth_client, audience, get_token, user):
+    token1 = get_token(username=user.username, password="pass1234")
+    client = auth_client(token1)
 
+    payload = {
+        "audience": str(audience.id),
+        "email": "a@x.com",
+        "tags": ["dev", "backend"]
+    }
+    C1 = client.post(CONTACTS_URL, payload, format="json")
 
+    payload = {
+        "audience": str(audience.id),
+        "email": "a@x.com",
+        "tags": ["sales"]
+    }
+    C2 = client.post(CONTACTS_URL, payload, format="json")
 
-
-
+    res = client.get(CONTACTS_URL, {"tags": "dev,unknown"})
+    assert res.status_code == 200
+    assert len(res.data['results']) == 1
+    assert res.data['results'][0]['id'] == C1.data['id']
 
 
 

@@ -3,6 +3,13 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.core.validators import RegexValidator
 from django.db.models import Q
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
+
+
+
+from django.conf import settings
+
 
 
 
@@ -59,6 +66,13 @@ class Contact(TimeStampedModel):
         db_index=True,
     )
 
+    tags = ArrayField(
+        base_field=models.CharField(max_length=64),
+        default=list,
+        blank=True,
+        help_text="List of lowercase tag names (user-scoped).",
+    )
+
     objects = NonArchivedManager()
     all_objects = models.Manager()  # includes archived
 
@@ -76,6 +90,7 @@ class Contact(TimeStampedModel):
             ),
         ]
         indexes = [
+            GinIndex(fields=["tags"]),
             models.Index(
                 Lower("email"),
                 name="idx_email_active",
@@ -93,6 +108,28 @@ class Contact(TimeStampedModel):
     def __str__(self):
         base = f"{self.email} @ {getattr(self.audience, 'name')}"
         return f"{base} [{self.status}]"
+
+
+class Tag(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=64)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="tags",
+        db_index=True
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"), "user",
+                name="uniq_tag_name_per_user_ci",  # case-insensitive unique
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.user})"
 
 
 
