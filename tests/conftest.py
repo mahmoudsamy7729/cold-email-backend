@@ -98,3 +98,27 @@ def create_contact():
         payload = {"email": email, "audience": audience.id}
         return client.post(CONTACTS_URL, payload, format="json")
     return _create_contact
+
+@pytest.fixture
+def campagin_model():
+    from campaigns.models import Campaign
+    return Campaign
+
+@pytest.fixture
+def campaign(db, campagin_model, user):
+    """Default campaign for the authenticated user"""
+    return campagin_model.objects.create(
+        id=uuid.uuid4(),
+        user=user,
+        name="Test Campagin",
+    )
+
+
+@pytest.fixture
+def other_campaign(db, campaign_model, other_user):
+    """campaign belonging to another user (should be excluded from queryset)"""
+    return campaign_model.objects.create(
+        id=uuid.uuid4(),
+        user=other_user,
+        name="Other Campaign",
+    )
