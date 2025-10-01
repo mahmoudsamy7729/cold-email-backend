@@ -48,8 +48,9 @@ INSTALLED_APPS = [
     'accounts',
     'audience',
     'contacts',
-    "django_extensions",
-    "django_filters",
+    'campaigns',
+    'django_extensions',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
