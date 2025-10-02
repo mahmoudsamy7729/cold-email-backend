@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'audience',
     'contacts',
     'campaigns',
+    'emails',
     'django_extensions',
     'django_filters',
 ]

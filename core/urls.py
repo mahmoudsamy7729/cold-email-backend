@@ -23,4 +23,5 @@ urlpatterns = [
     path('api/', include('audience.urls')),
     path('api/', include('contacts.urls')),
     path('api/', include('campaigns.urls')),
+    path("api/", include("emails.urls")),
 ]
