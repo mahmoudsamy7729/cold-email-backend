@@ -37,7 +37,8 @@ def _pick_test_contact(email: Email):
 def _build_html_from_plain(plain: str) -> str:
     # minimal safe HTML wrapping + newline → <br>
     plain = plain or ""
-    return f"<div>{escape(plain).replace('\n', '<br>')}</div>"
+    formatted = escape(plain).replace("\n", "<br>")
+    return f"<div>{formatted}</div>"
 
 
 
