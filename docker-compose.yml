@@ -15,8 +15,11 @@ services:
         condition: service_started
 
   redis:
-    image: redis:7-alpine
+    image: redis:7
     container_name: coldreach-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
     ports:
       - "6379:6379"
     healthcheck:
@@ -42,5 +45,56 @@ services:
       timeout: 3s
       retries: 20
 
+  celery-worker-dispatch:
+    build: .
+    depends_on: [web, redis]
+    command: >
+      sh -c "celery -A core.celery_app worker
+      -Q dispatch
+      -n dispatch@%h
+      -c 4
+      --prefetch-multiplier=1
+      --loglevel=INFO"
+    volumes:
+      - .:/app
+
+  celery-worker-send:
+    build: .
+    depends_on: [web, redis]
+    command: >
+      sh -c "celery -A core.celery_app worker
+      -Q send
+      -n send@%h
+      -c 16
+      --prefetch-multiplier=1
+      --loglevel=INFO"
+    volumes:
+      - .:/app
+
+  celery-beat:
+    build: .
+    depends_on: [web, redis]
+    command: >
+      sh -c "celery -A core.celery_app beat
+      --loglevel=INFO
+      --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    volumes:
+      - .:/app
+
+  flower:
+    build: .
+    container_name: flower
+    command: celery -A core flower --port=5555
+    volumes:
+      - .:/app
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - web
+    environment:
+      - TZ=Africa/Cairo
+
 volumes:
+  redis_data:
   pgdata:
