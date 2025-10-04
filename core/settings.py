@@ -50,8 +50,10 @@ INSTALLED_APPS = [
     'contacts',
     'campaigns',
     'emails',
+    'tracking',
     'django_extensions',
     'django_filters',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -75,8 +77,14 @@ CACHES = {
     }
 }
 
+
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://redis:6379/0")
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="redis://redis:6379/2")
+CELERY_TIMEZONE = "Africa/Cairo"
+CELERY_ENABLE_UTC = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_ACKS_LATE = True
+
 
 CORS_ALLOWED_ORIGINS = [ "http://localhost:8080", "http://127.0.0.1:8080", ]
 CORS_ALLOW_CREDENTIALS = True
@@ -181,3 +189,15 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Email (dev)
+EMAIL_BACKEND = config("EMAIL_BACKEND")
+EMAIL_HOST = config("EMAIL_HOST")
+EMAIL_PORT = config("EMAIL_PORT")
+EMAIL_USE_TLS = config("EMAIL_USE_TLS")
+
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

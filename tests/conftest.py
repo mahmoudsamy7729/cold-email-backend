@@ -122,3 +122,68 @@ def other_campaign(db, campaign_model, other_user):
         user=other_user,
         name="Other Campaign",
     )
+
+
+
+
+def get_emails_url(campaign_id):
+    return reverse(
+        "emails:email-list-create",  
+        kwargs={
+            "campaign_id": campaign_id,
+        }
+    )
+
+@pytest.fixture
+def emails_model():
+    from emails.models import Email
+    return Email
+
+@pytest.fixture
+def create_email(api_client, auth_client, get_token, user, campaign, audience):
+    """
+    Factory to create an Email via API for the authenticated 'user'.
+    Returns (client, response), where client is already authenticated.
+    """
+    def _create_email(*, subject="Hello", content_text="Body", from_email="me@test.com", audience_id=None):
+        token = get_token(user.username, "pass1234")
+        client = auth_client(token)
+        payload = {
+            "audience": str(audience_id or audience.id),
+            "subject": subject,
+            "content_text": content_text,
+            "from_email": from_email,
+        }
+        
+        url = get_emails_url(campaign.id)
+        res = client.post(url, payload, format="json")
+        return client, res
+    return _create_email
+
+
+@pytest.fixture
+def create_contact_for_audience(api_client, auth_client, get_token, user):
+    """
+    Factory to create a contact into a given audience for the authenticated 'user'.
+    """
+    def _create_contact_for_audience(audience, email="test1@example.com"):
+        token = get_token(user.username, "pass1234")
+        client = auth_client(token)
+        payload = {"email": email, "audience": str(audience.id)}
+        res = client.post(CONTACTS_URL, payload, format="json")
+        return client, res
+    return _create_contact_for_audience
+
+@pytest.fixture
+def email_ready_to_test(create_contact_for_audience, create_email, audience):
+    """
+    Returns (client, campaign_id, email_id) where audience has 1 contact with an email.
+    """
+    _, c_res = create_contact_for_audience(audience, email="rcpt@example.com")
+    assert c_res.status_code in (200, 201)
+    client, e_res = create_email(audience_id=audience.id)
+    assert e_res.status_code == 201
+    from campaigns.models import Campaign
+    # campaign used inside create_email comes from the fixture, so return it too
+    # But create_email closes over 'campaign' fixture; easiest is to just pass back what tests already have
+    return client, e_res.data["id"]
